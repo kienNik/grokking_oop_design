@@ -28,6 +28,13 @@ enum class ReservationStatus {
     Pending,
     Completed,
     Canceled,
+    None,
+};
+
+enum class AccountStatus {
+    Active,
+    Closed,
+    Canceled,
     Blacklisted,
     None,
 };
