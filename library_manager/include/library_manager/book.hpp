@@ -48,7 +48,7 @@ class BookItem : public Book
             return false;
         }
 
-        updateBookItemStatus(BookStatus::Loaned);
+        updateBookItemStatus(BookStatus::LOANED);
         return true;
     }
 

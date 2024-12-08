@@ -7,36 +7,36 @@
 namespace library_manager
 {
 enum class BookFormat {
-    Hardcover,
-    Paperback,
-    AudioBook,
-    Ebook,
-    Newspaper,
-    Magazine,
-    Journal,
+    HARDCOVER,
+    PAPERBACK,
+    AUDIOBOOK,
+    EBOOK,
+    NEWSPAPER,
+    MAGAZINE,
+    JOURNAL,
 };
 
 enum class BookStatus {
-    Available,
-    Reserved,
-    Loaned,
-    Lost,
+    AVAILABLE,
+    RESERVED,
+    LOANED,
+    LOST,
 };
 
 enum class ReservationStatus {
-    Waiting,
-    Pending,
-    Completed,
-    Canceled,
-    None,
+    WAITING,
+    PENDING,
+    COMPLETED,
+    CANCELED,
+    NONE,
 };
 
 enum class AccountStatus {
-    Active,
-    Closed,
-    Canceled,
-    Blacklisted,
-    None,
+    ACTIVE,
+    CLOSED,
+    CANCELED,
+    BLACKLISTED,
+    NONE,
 };
 
 class Address
