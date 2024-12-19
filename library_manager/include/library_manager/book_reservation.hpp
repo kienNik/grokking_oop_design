@@ -41,6 +41,11 @@ class BookReservation
     {
         status_ = status;
     }
+
+    void sendBookAvailableNotification()
+    {
+        return;
+    }
 };
 
 class BookLending
@@ -70,6 +75,11 @@ class BookLending
     {
         return this;
     }
+
+    time_t getDueDate()
+    {
+        return due_date_;
+    }
 };
 
 class Fine
@@ -85,6 +95,12 @@ class Fine
         creation_date_ = std::time(0);
         book_item_barcode_ = book_item_barcode;
         member_id_ = member_id;
+    }
+
+    void collectFine(std::string member_id, time_t days)
+    {
+        // TODO: add collect fine
+        return;
     }
 };
 

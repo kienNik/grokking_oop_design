@@ -1,8 +1,11 @@
-#include <iostream>
-#include <string>
+#include <chrono>
 #include <ctime>
+#include <iostream>
+#include <memory>
+#include <string>
 
 #include "library_manager/book.hpp"
+#include "library_manager/book_reservation.hpp"
 #include "library_manager/types.hpp"
 
 namespace library_manager
@@ -26,22 +29,35 @@ class Account
     {
         password_ = "";
     }
+
+    std::string getId() const
+    {
+        return id_;
+    }
 };
 
 class Librarian : public Account
 {
   public:
     Librarian(std::string& id, std::string& password, Person& person,
-              auto status = AccountStatus::Active);
+              auto status = AccountStatus::Active)
+    {
+    }
 
-    void addBookItem(BookItem& book_item);
+    void addBookItem(const BookItem& book_item)
+    {
+    }
 
-    void blockMember(Member& member);
+    void blockMember(const Member& member)
+    {
+    }
 
-    void unblockMember(Member& member);
+    void unblockMember(const Member& member)
+    {
+    }
 };
 
-class Member
+class Member : public Account
 {
   private:
     int total_books_checkedout_ = 0;
@@ -49,21 +65,109 @@ class Member
 
   public:
     Member(std::string& id, std::string& password, Person& person,
-           auto status = AccountStatus::Active);
+           auto status = AccountStatus::Active)
+      : Account(id, password, person, password)
+    {
+        date_of_membership_ = std::time(0);
+    }
 
-    void reserveBookItem(BookItem& book_item);
+    inline int getTotalBookCheckedout() const
+    {
+        return total_books_checkedout_;
+    }
 
-    void incrementTotalBooksCheckedout();
+    void reserveBookItem(const BookItem& book_item)
+    {
+    }
 
-    bool renewBookItem(BookItem& book_item);
+    inline void incrementTotalBooksCheckedout()
+    {
+        ++total_books_checkedout_;
+    }
 
-    void checkoutBookItem(BookItem& book_item);
+    inline void decrementTotalBooksCheckedout()
+    {
+        --total_books_checkedout_;
+    }
 
-    double checkForFine(std::string& book_item_barcode);
+    bool Member::checkoutBookItem(BookItem& book_item)
+    {
+        if (total_books_checkedout_ >= MAX_BOOKS_ISSUED_TO_A_USER) {
+            std::cout << "The user has already checked-out maximum number of books.\n";
+            return false;
+        }
 
-    void returnBookItem(BookItem& book_item);
+        auto book_reservation =
+            std::shared_ptr<BookReservation>();  // TODO: design book reservation system to lookup
+                                                 // by barcode
+        if (book_reservation && (book_reservation->getMemberId() != getId())) {
+            std::cout << "Book is reserved by another member\n";
+            return false;
+        } else if (book_reservation) {
+            book_reservation->updateStatus(ReservationStatus::COMPLETED);
+        }
 
-    void returnBookItem(BookItem& book_item);
+        if (!book_item.checkout(getId())) {
+            return false;
+        }
+
+        incrementTotalBooksCheckedout();
+        return true;
+    }
+
+    void checkForFine(const std::string& book_item_barcode)
+    {
+        auto book_lending = std::shared_ptr<BookLending>();  // TODO: design book lending system to
+                                                             // lookup by barcode
+        auto due_date = book_lending->getDueDate();
+        auto today = std::time(0);
+
+        // Check if the book has been returned within the due date
+        if (today > due_date) {
+            auto diff = today - due_date;
+            auto fine = std::shared_ptr<Fine>();
+            fine->collectFine(getId(), diff);
+        }
+    }
+
+    void returnBookItem(BookItem& book_item)
+    {
+        checkForFine(book_item.getBarcode());
+        auto book_reservation =
+            std::shared_ptr<BookReservation>();  // TODO: design book reservation system to lookup
+                                                 // by barcode
+        if (book_reservation) {
+            // Book item has a pending reservation
+            book_item.updateBookItemStatus(BookStatus::RESERVED);
+            book_reservation->sendBookAvailableNotification();
+            book_item.updateBookItemStatus(BookStatus::AVAILABLE);
+        }
+    }
+
+    bool renewBookItem(BookItem& book_item)
+    {
+        checkForFine(book_item.getBarcode());
+        auto book_reservation =
+            std::shared_ptr<BookReservation>();  // TODO: design book reservation system to lookup
+                                                 // by barcode
+
+        // Check if self book item has a pending reservation from another member
+        if (book_reservation && book_reservation->getMemberId() != getId()) {
+            std::cout << "Book is reserved by another member\n";
+            decrementTotalBooksCheckedout();
+            book_item.updateBookItemStatus(BookStatus::RESERVED);
+            book_reservation->sendBookAvailableNotification();
+            return false;
+        } else if (book_reservation) {
+            // Book item has a pending reservation from self member
+            book_reservation->updateStatus(ReservationStatus::COMPLETED);
+        }
+
+        auto book_lending = std::shared_ptr<BookLending>();
+        book_lending->lendBook(getId(), book_item.getBarcode());
+        book_item.updateDueDate(time_t(0) + MAX_LENDING_DAYS);
+        return true;
+    }
 };
 
 }  // namespace library_manager

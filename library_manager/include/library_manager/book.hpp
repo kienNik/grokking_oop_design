@@ -57,9 +57,14 @@ class BookItem : public Book
         status_ = status;
     }
 
-    std::string getBarcode()
+    std::string getBarcode() const
     {
         return barcode_;
+    }
+
+    void updateDueDate(time_t date)
+    {
+        due_date_ = date;
     }
 };
 
